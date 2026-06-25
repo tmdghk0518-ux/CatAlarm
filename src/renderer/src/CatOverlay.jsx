@@ -14,7 +14,7 @@ function CatOverlay() {
 
   return (
     <main className="character-scene" key={playKey}>
-      <div className="sprite-frame" aria-label="기지개를 펴는 캐릭터" role="img">
+      <div className="sprite-frame" aria-label="기지개를 켜는 캐릭터" role="img">
         <img className="sprite-strip" src={sprite} alt="" draggable="false" />
       </div>
     </main>

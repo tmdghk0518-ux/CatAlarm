@@ -107,6 +107,19 @@ function getCatBounds(options = {}) {
     };
   }
 
+  if (options.position === 'custom' && options.customPosition) {
+    const x = Math.round(Math.max(workArea.x, Math.min(workArea.x + workArea.width - width, Number(options.customPosition.x) || centerX)));
+    const y = Math.round(Math.max(workArea.y, Math.min(workArea.y + workArea.height - height, Number(options.customPosition.y) || centerY)));
+
+    return {
+      x,
+      y,
+      width,
+      height,
+      scale
+    };
+  }
+
   return {
     ...(positions[options.position] ?? positions['bottom-right']),
     width,
@@ -119,6 +132,7 @@ async function showCat(options = {}) {
   hideCat();
 
   const { scale: _scale, ...bounds } = getCatBounds(options);
+  const isPreview = Boolean(options.preview);
 
   catWindow = new BrowserWindow({
     ...bounds,
@@ -128,7 +142,7 @@ async function showCat(options = {}) {
     backgroundColor: '#00000000',
     hasShadow: false,
     resizable: false,
-    movable: false,
+    movable: isPreview,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -145,6 +159,14 @@ async function showCat(options = {}) {
 
   catWindow.setAlwaysOnTop(true, 'screen-saver');
   catWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  catWindow.setIgnoreMouseEvents(!isPreview, { forward: true });
+
+  if (isPreview) {
+    catWindow.on('move', () => {
+      if (!catWindow || catWindow.isDestroyed()) return;
+      mainWindow?.webContents.send('cat:moved', catWindow.getBounds());
+    });
+  }
 
   catWindow.once('closed', () => {
     catWindow = undefined;

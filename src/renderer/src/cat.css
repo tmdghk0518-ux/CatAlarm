@@ -19,6 +19,7 @@ body {
   place-items: center;
   overflow: hidden;
   pointer-events: none;
+  -webkit-app-region: drag;
 }
 
 .sprite-frame {
@@ -26,6 +27,7 @@ body {
   aspect-ratio: 1;
   overflow: hidden;
   filter: drop-shadow(0 22px 18px rgba(55, 38, 24, 0.18));
+  -webkit-app-region: drag;
 }
 
 .sprite-strip {
@@ -35,7 +37,7 @@ body {
   max-width: none;
   object-fit: fill;
   user-select: none;
-  animation: stretch-frames 3.2s steps(17, end) infinite;
+  animation: stretch-frames 3.4s steps(17, end) infinite;
   will-change: transform;
 }
 

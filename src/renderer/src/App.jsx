@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-const DEFAULT_DURATION = 25 * 60;
-const MAX_MINUTES = 120;
+const DEFAULT_DURATION = 30 * 60;
+const MAX_MINUTES = 99;
 const MAX_SECONDS = 59;
+const DURATION_KEY = 'catAlarm.duration';
+const CUSTOM_POSITION_KEY = 'catAlarm.customPosition';
 const POSITIONS = [
   ['bottom-right', '우하단'],
   ['bottom-left', '좌하단'],
@@ -15,7 +17,8 @@ const POSITIONS = [
   ['left', '좌측'],
   ['right', '우측'],
   ['center', '중앙'],
-  ['random', '랜덤']
+  ['random', '랜덤'],
+  ['custom', '직접']
 ];
 
 function pad(value) {
@@ -26,6 +29,20 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function loadDuration() {
+  const saved = Number(localStorage.getItem(DURATION_KEY));
+  return Number.isFinite(saved) && saved > 0 ? clamp(saved, 1, MAX_MINUTES * 60 + MAX_SECONDS) : DEFAULT_DURATION;
+}
+
+function loadCustomPosition() {
+  try {
+    const value = JSON.parse(localStorage.getItem(CUSTOM_POSITION_KEY));
+    return Number.isFinite(value?.x) && Number.isFinite(value?.y) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 function splitTime(totalSeconds) {
   return {
     minutes: Math.floor(totalSeconds / 60),
@@ -33,17 +50,30 @@ function splitTime(totalSeconds) {
   };
 }
 
-function TimeWheel({ label, value, min, max, disabled, onChange }) {
-  const step = (delta) => onChange(clamp(value + delta, min, max));
+function TimeField({ label, value, min, max, disabled, onChange }) {
+  const commit = (nextValue) => onChange(clamp(nextValue, min, max));
+  const handleInput = (event) => {
+    const digits = event.target.value.replace(/\D/g, '').slice(0, 2);
+    commit(digits === '' ? 0 : Number(digits));
+  };
 
   return (
     <div className="time-wheel" aria-label={label}>
-      <button type="button" aria-label={`${label} 올리기`} disabled={disabled || value >= max} onClick={() => step(1)}>
+      <button type="button" aria-label={`${label} 올리기`} disabled={disabled || value >= max} onClick={() => commit(value + 1)}>
         ▲
       </button>
-      <strong>{pad(value)}</strong>
+      <input
+        aria-label={label}
+        disabled={disabled}
+        inputMode="numeric"
+        maxLength={2}
+        pattern="[0-9]*"
+        value={pad(value)}
+        onChange={handleInput}
+        onFocus={(event) => event.target.select()}
+      />
       <span>{label}</span>
-      <button type="button" aria-label={`${label} 내리기`} disabled={disabled || value <= min} onClick={() => step(-1)}>
+      <button type="button" aria-label={`${label} 내리기`} disabled={disabled || value <= min} onClick={() => commit(value - 1)}>
         ▼
       </button>
     </div>
@@ -51,12 +81,14 @@ function TimeWheel({ label, value, min, max, disabled, onChange }) {
 }
 
 function App() {
-  const [duration, setDuration] = useState(DEFAULT_DURATION);
-  const [remaining, setRemaining] = useState(DEFAULT_DURATION);
+  const initialDuration = useMemo(loadDuration, []);
+  const [duration, setDuration] = useState(initialDuration);
+  const [remaining, setRemaining] = useState(initialDuration);
   const [progressRatio, setProgressRatio] = useState(1);
   const [status, setStatus] = useState('idle');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [position, setPosition] = useState(localStorage.getItem('catAlarm.position') ?? 'bottom-right');
+  const [customPosition, setCustomPosition] = useState(loadCustomPosition);
   const [size, setSize] = useState(Number(localStorage.getItem('catAlarm.size')) || 100);
   const [message, setMessage] = useState('준비 완료');
   const frameRef = useRef(null);
@@ -77,6 +109,21 @@ function App() {
   }, [size]);
 
   useEffect(() => {
+    localStorage.setItem(DURATION_KEY, String(duration));
+  }, [duration]);
+
+  useEffect(() => {
+    if (customPosition) {
+      localStorage.setItem(CUSTOM_POSITION_KEY, JSON.stringify(customPosition));
+    }
+  }, [customPosition]);
+
+  useEffect(() => {
+    window.catAlarm?.onCatMoved?.((bounds) => {
+      setCustomPosition({ x: bounds.x, y: bounds.y });
+      setPosition('custom');
+      setMessage('직접 위치 저장됨');
+    });
     window.catAlarm?.onCatDismissed?.(() => {
       setStatus('idle');
       setRemaining(duration);
@@ -151,9 +198,9 @@ function App() {
 
   function showCat(preview) {
     setStatus(preview ? status : 'cat');
-    setMessage(preview ? '미리보기 표시' : '휴식 시간');
+    setMessage(preview ? '드래그로 위치 조절' : '휴식 시간');
 
-    window.catAlarm?.showCat?.({ position, sizePercent: size }).catch((error) => {
+    window.catAlarm?.showCat?.({ position, customPosition, sizePercent: size, preview }).catch((error) => {
       setMessage(`표시 오류: ${error?.message ?? error}`);
     });
   }
@@ -185,7 +232,7 @@ function App() {
       </section>
 
       <section className="duration-strip" aria-label="타이머 설정">
-        <TimeWheel
+        <TimeField
           label="분"
           value={durationTime.minutes}
           min={0}
@@ -193,7 +240,7 @@ function App() {
           disabled={status !== 'idle'}
           onChange={(minutes) => updateDuration(minutes, durationTime.seconds)}
         />
-        <TimeWheel
+        <TimeField
           label="초"
           value={durationTime.seconds}
           min={0}
@@ -204,7 +251,7 @@ function App() {
       </section>
 
       <div className="quick-row">
-        {[5, 15, 25, 50].map((minutes) => (
+        {[5, 10, 30, 60].map((minutes) => (
           <button key={minutes} type="button" disabled={status !== 'idle'} onClick={() => updateDuration(minutes, 0)}>
             {minutes}분
           </button>

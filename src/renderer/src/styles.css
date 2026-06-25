@@ -178,13 +178,23 @@ input:disabled {
   font-weight: 900;
 }
 
-.time-wheel strong {
+.time-wheel input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
   color: #33251c;
   font-size: 1.18rem;
   font-weight: 950;
   line-height: 1;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+.time-wheel input:focus {
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.46);
 }
 
 .time-wheel span {
