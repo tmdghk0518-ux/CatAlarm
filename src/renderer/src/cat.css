@@ -1,0 +1,50 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.character-scene {
+  position: relative;
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sprite-frame {
+  width: min(100vw, 100vh);
+  aspect-ratio: 1;
+  overflow: hidden;
+  filter: drop-shadow(0 22px 18px rgba(55, 38, 24, 0.18));
+}
+
+.sprite-strip {
+  display: block;
+  width: 1800%;
+  height: 100%;
+  max-width: none;
+  object-fit: fill;
+  user-select: none;
+  animation: stretch-frames 3.2s steps(17, end) infinite;
+  will-change: transform;
+}
+
+@keyframes stretch-frames {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-94.444444%);
+  }
+}
