@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import sprite from '../assets/character-sprite.png';
+import characterVideo from '../assets/character-stretch.webm';
 import './cat.css';
 
 function CatOverlay() {
@@ -13,10 +13,17 @@ function CatOverlay() {
   }, []);
 
   return (
-    <main className="character-scene" key={playKey}>
-      <div className="sprite-frame" aria-label="기지개를 켜는 캐릭터" role="img">
-        <img className="sprite-strip" src={sprite} alt="" draggable="false" />
-      </div>
+    <main className="character-scene">
+      <video
+        key={playKey}
+        className="character-video"
+        src={characterVideo}
+        aria-label="기지개를 켜는 캐릭터"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
     </main>
   );
 }

@@ -87,6 +87,7 @@ function App() {
   const [progressRatio, setProgressRatio] = useState(1);
   const [status, setStatus] = useState('idle');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [previewActive, setPreviewActive] = useState(false);
   const [position, setPosition] = useState(localStorage.getItem('catAlarm.position') ?? 'bottom-right');
   const [customPosition, setCustomPosition] = useState(loadCustomPosition);
   const [size, setSize] = useState(Number(localStorage.getItem('catAlarm.size')) || 100);
@@ -125,6 +126,7 @@ function App() {
       setMessage('직접 위치 저장됨');
     });
     window.catAlarm?.onCatDismissed?.(() => {
+      setPreviewActive(false);
       setStatus('idle');
       setRemaining(duration);
       setProgressRatio(1);
@@ -134,6 +136,7 @@ function App() {
       start(duration);
     });
     window.catAlarm?.onCatError?.((error) => {
+      setPreviewActive(false);
       setStatus('idle');
       setMessage(`표시 오류: ${error}`);
     });
@@ -153,6 +156,7 @@ function App() {
   function start(seconds = remaining || duration) {
     window.cancelAnimationFrame(frameRef.current);
     window.catAlarm?.hideCat?.();
+    setPreviewActive(false);
     deadlineRef.current = performance.now() + seconds * 1000;
     setRemaining(seconds);
     setProgressRatio(seconds / duration);
@@ -190,6 +194,7 @@ function App() {
   function stop() {
     window.cancelAnimationFrame(frameRef.current);
     window.catAlarm?.hideCat?.();
+    setPreviewActive(false);
     setStatus('idle');
     setRemaining(duration);
     setProgressRatio(1);
@@ -197,12 +202,23 @@ function App() {
   }
 
   function showCat(preview) {
+    setPreviewActive(preview);
     setStatus(preview ? status : 'cat');
     setMessage(preview ? '드래그로 위치 조절' : '휴식 시간');
 
     window.catAlarm?.showCat?.({ position, customPosition, sizePercent: size, preview }).catch((error) => {
+      setPreviewActive(false);
       setMessage(`표시 오류: ${error?.message ?? error}`);
     });
+  }
+
+  function closeSettings() {
+    setSettingsOpen(false);
+    if (previewActive) {
+      window.catAlarm?.hideCat?.();
+      setPreviewActive(false);
+      setMessage('준비 완료');
+    }
   }
 
   return (
@@ -278,7 +294,7 @@ function App() {
                 <p>Settings</p>
                 <h2>등장 설정</h2>
               </div>
-              <button className="icon-button" type="button" aria-label="닫기" onClick={() => setSettingsOpen(false)}>
+              <button className="icon-button" type="button" aria-label="닫기" onClick={closeSettings}>
                 ×
               </button>
             </div>
