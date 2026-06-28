@@ -1,21 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import characterVideo from '../assets/character-stretch.webm';
 import './cat.css';
 
 function CatOverlay() {
-  const [playKey, setPlayKey] = useState(0);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     window.catAlarm?.onCatPlay?.(() => {
-      setPlayKey((value) => value + 1);
+      if (!videoRef.current) return;
+      videoRef.current.currentTime = 0;
+      void videoRef.current.play();
     });
   }, []);
 
   return (
     <main className="character-scene">
       <video
-        key={playKey}
+        ref={videoRef}
         className="character-video"
         src={characterVideo}
         aria-label="기지개를 켜는 캐릭터"
@@ -23,9 +25,15 @@ function CatOverlay() {
         loop
         muted
         playsInline
+        preload="auto"
       />
     </main>
   );
 }
 
-createRoot(document.querySelector('#root')).render(<CatOverlay />);
+const root = createRoot(document.querySelector('#root'));
+root.render(<CatOverlay />);
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => root.unmount());
+}

@@ -172,8 +172,11 @@ async function showCat(options = {}) {
     catWindow = undefined;
   });
 
+  let revealed = false;
   const reveal = () => {
+    if (revealed) return;
     if (!catWindow || catWindow.isDestroyed()) return;
+    revealed = true;
     catWindow.showInactive();
     catWindow.moveTop();
     catWindow.webContents.send('cat:play');
