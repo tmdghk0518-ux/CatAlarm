@@ -31,3 +31,23 @@ body {
   filter: drop-shadow(0 22px 18px rgba(55, 38, 24, 0.18));
   -webkit-app-region: drag;
 }
+
+.character-scene.is-alarm,
+.character-scene.is-alarm .character-video {
+  -webkit-app-region: no-drag;
+}
+
+.character-hit-target {
+  position: absolute;
+  top: 8%;
+  left: 18%;
+  width: 64%;
+  height: 88%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  clip-path: polygon(32% 0, 68% 0, 100% 28%, 80% 42%, 73% 100%, 27% 100%, 20% 42%, 0 28%);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}

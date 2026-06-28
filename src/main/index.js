@@ -179,7 +179,7 @@ async function showCat(options = {}) {
     revealed = true;
     catWindow.showInactive();
     catWindow.moveTop();
-    catWindow.webContents.send('cat:play');
+    catWindow.webContents.send('cat:play', { preview: isPreview });
   };
 
   catWindow.once('ready-to-show', reveal);
@@ -235,6 +235,14 @@ ipcMain.handle('cat:dismiss', () => {
 ipcMain.handle('cat:restart', () => {
   hideCat();
   mainWindow?.webContents.send('cat:restart');
+  return true;
+});
+ipcMain.handle('cat:set-interactive', (event, interactive) => {
+  if (!catWindow || catWindow.isDestroyed() || event.sender !== catWindow.webContents) {
+    return false;
+  }
+
+  catWindow.setIgnoreMouseEvents(!interactive, { forward: true });
   return true;
 });
 

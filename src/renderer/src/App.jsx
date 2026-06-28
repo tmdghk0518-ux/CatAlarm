@@ -120,26 +120,33 @@ function App() {
   }, [customPosition]);
 
   useEffect(() => {
-    window.catAlarm?.onCatMoved?.((bounds) => {
+    const unsubscribeMoved = window.catAlarm?.onCatMoved?.((bounds) => {
       setCustomPosition({ x: bounds.x, y: bounds.y });
       setPosition('custom');
       setMessage('직접 위치 저장됨');
     });
-    window.catAlarm?.onCatDismissed?.(() => {
+    const unsubscribeDismissed = window.catAlarm?.onCatDismissed?.(() => {
       setPreviewActive(false);
       setStatus('idle');
       setRemaining(duration);
       setProgressRatio(1);
       setMessage('준비 완료');
     });
-    window.catAlarm?.onCatRestart?.(() => {
+    const unsubscribeRestart = window.catAlarm?.onCatRestart?.(() => {
       start(duration);
     });
-    window.catAlarm?.onCatError?.((error) => {
+    const unsubscribeError = window.catAlarm?.onCatError?.((error) => {
       setPreviewActive(false);
       setStatus('idle');
       setMessage(`표시 오류: ${error}`);
     });
+
+    return () => {
+      unsubscribeMoved?.();
+      unsubscribeDismissed?.();
+      unsubscribeRestart?.();
+      unsubscribeError?.();
+    };
   }, [duration]);
 
   function updateDuration(minutes, seconds) {
